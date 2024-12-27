@@ -1,28 +1,22 @@
-# Use a lightweight Node.js base image for building the Angular app
-FROM node:18-alpine AS build
+FROM node:18 
 
 # Set the working directory
-WORKDIR /app
+WORKDIR /usr/local/app
 
-# Copy package.json and package-lock.json to leverage Docker caching
-COPY package*.json ./
+# Copy package.json and package-lock.json
+COPY package.json package-lock.json ./
 
-# Install dependencies (cached layer)
-RUN npm install --legacy-peer-deps
+# Install dependencies
+RUN npm install 
 
-# Copy only the application source files
-COPY src ./src
-COPY angular.json ./
-COPY tsconfig*.json ./
+# Copy the rest of the application code
+COPY . .
+#comment
+RUN chmod -R 777 /usr/local/app
 
-# Build the Angular app for production
-RUN npm run build -- --output-path=dist
+# Expose port 4200
+EXPOSE 4200
 
-# Use the official NGINX base image for serving
-FROM nginx:stable-alpine
-COPY ./nginx.conf /etc/nginx/nginx.conf
-COPY --from=build /app/dist /usr/share/nginx/html
 
-EXPOSE 8080
-USER nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the Angular application using npx
+CMD ["npx", "ng", "serve", "--host", "0.0.0.0"]
